@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SQL Chronicles — Mission 1 (MVP)</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1>SQL Chronicles — Mission 1</h1>
+      <p>Café Noir • June 11, 2025 • 9:30 PM</p>
+    </div>
+    <div class="actions">
+      <button id="toggleSchema">Show Schema</button>
+      <button id="resetBtn">Reset</button>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="card story">
+      <h2>Scene: The Late Shift</h2>
+      <pre class="prompt" id="missionPrompt"></pre>
+      <div class="story-actions">
+        <button id="toggleHints">Show Hints</button>
+        <span id="status" class="status hidden">Suspect Identified</span>
+      </div>
+      <div id="hints" class="hints hidden"></div>
+      <div id="schema" class="schema hidden"></div>
+      <div id="success" class="success hidden">
+        ✅ Nice work, Detective! <b>Tanya Desai</b> was on shift at 9:30 PM and wore a red hoodie.
+        Proceed to the storage room… (Next mission would unlock here.)
+      </div>
+    </section>
+
+    <section class="card console">
+      <div class="console-header">
+        <h2>Investigation Console (SQL)</h2>
+        <button id="runBtn" class="run">Run Query</button>
+      </div>
+      <textarea id="sqlInput" spellcheck="false" placeholder="Write SQL here..."></textarea>
+      <div id="error" class="error hidden"></div>
+      <div class="results">
+        <div class="results-title">Results</div>
+        <div id="results"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    Tip: Any correct query that returns the right rows will clear the mission — formatting doesn’t matter.
+  </footer>
+
+  <!-- AlaSQL from CDN -->
+<script src="alasql.min.js"></script>
+
+<script src="app.js"></script>
+
+</body>
+</html>
