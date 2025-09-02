@@ -1,186 +1,101 @@
-/** SQL Chronicles — Mission 1 (AlaSQL in-browser) **/
+// ---------------- DATABASE SETUP ----------------
 
-// Schema + seed
-const schemaSQL = `
-CREATE TABLE Employees (
-  id INT PRIMARY KEY,
-  name STRING,
-  role STRING,
-  hoodie_color STRING
-);
+// Scenes (id, text)
+alasql('CREATE TABLE scenes (id INT, text STRING)');
+alasql("INSERT INTO scenes VALUES (1, 'You arrive at the hotel. A storm rages outside.')");
+alasql("INSERT INTO scenes VALUES (2, 'You enter the library. A body is lying on the floor.')");
+alasql("INSERT INTO scenes VALUES (3, 'You find a torn glove near the fireplace.')");
+alasql("INSERT INTO scenes VALUES (4, 'You hear a scream from upstairs.')");
+alasql("INSERT INTO scenes VALUES (5, 'Final Accusation: Who is the killer?')");
 
-CREATE TABLE LoginLogs (
-  id INT PRIMARY KEY,
-  employee_id INT,
-  login_time STRING,
-  logout_time STRING
-);
-`;
+// Choices (id, scene_id, text, next_scene_id, evidence_id)
+alasql('CREATE TABLE choices (id INT, scene_id INT, text STRING, next_scene_id INT, evidence_id INT)');
+alasql("INSERT INTO choices VALUES (1, 1, 'Go to the library', 2, NULL)");
+alasql("INSERT INTO choices VALUES (2, 1, 'Check fireplace', 3, 1)");
+alasql("INSERT INTO choices VALUES (3, 2, 'Search the body', 3, 2)");
+alasql("INSERT INTO choices VALUES (4, 2, 'Go upstairs', 4, NULL)");
+alasql("INSERT INTO choices VALUES (5, 4, 'Confront suspects', 5, NULL)");
 
-const seedSQL = `
-INSERT INTO Employees VALUES
-  (1,'Aryan Singh','Barista','red'),
-  (2,'Sneha Patil','Manager','black'),
-  (3,'Rahul Mehta','Chef','blue'),
-  (4,'Tanya Desai','Cleaner','red'),
-  (5,'Omkar Joshi','Cashier','green');
+// Evidence (id, name, description)
+alasql('CREATE TABLE evidence (id INT, name STRING, description STRING)');
+alasql("INSERT INTO evidence VALUES (1, 'Glove', 'A torn glove with initials M.K.')");
+alasql("INSERT INTO evidence VALUES (2, 'Letter', 'A threatening letter addressed to the victim.')");
 
-INSERT INTO LoginLogs VALUES
-  (1,1,'2025-06-11 17:00','2025-06-11 20:30'),
-  (2,2,'2025-06-11 15:00','2025-06-11 21:00'),
-  (3,3,'2025-06-11 18:00','2025-06-11 22:00'),
-  (4,4,'2025-06-11 20:00','2025-06-11 21:30'),
-  (5,5,'2025-06-11 19:30','2025-06-11 20:00');
-`;
+// Suspects (id, name, alibi, guilty)
+alasql('CREATE TABLE suspects (id INT, name STRING, alibi STRING, guilty BOOL)');
+alasql("INSERT INTO suspects VALUES (1, 'Mr. King', 'Claims he was in the kitchen.', TRUE)");
+alasql("INSERT INTO suspects VALUES (2, 'Mrs. Rose', 'Was reading in her room.', FALSE)");
+alasql("INSERT INTO suspects VALUES (3, 'Detective Grey', 'Investigating another case.', FALSE)");
 
-// Mission copy
-const missionPrompt = `🕵️‍♀️ Mission 1: The Late Shift
+// ---------------- GAME STATE ----------------
+let currentScene = 1;
+let inventory = [];
 
-The manager was attacked around 9:30 PM at Café Noir. A witness saw someone in a red hoodie.
+// ---------------- RENDER FUNCTIONS ----------------
+function renderScene(sceneId) {
+    let scene = alasql('SELECT * FROM scenes WHERE id = ?', [sceneId])[0];
+    let choices = alasql('SELECT * FROM choices WHERE scene_id = ?', [sceneId]);
 
-Goal: Find employees who were actively logged in at 9:30 PM and wore a red hoodie.
+    document.getElementById('story').innerText = scene.text;
 
-Tables:
-- Employees(id, name, role, hoodie_color)
-- LoginLogs(id, employee_id, login_time, logout_time)
+    let buttonsDiv = document.getElementById('choices');
+    buttonsDiv.innerHTML = '';
 
-Tip: JOIN the tables. Time filter: '2025-06-11 21:30' should be between login_time and logout_time.
-`;
+    choices.forEach(choice => {
+        let btn = document.createElement('button');
+        btn.innerText = choice.text;
+        btn.onclick = () => {
+            // Collect evidence if available
+            if (choice.evidence_id) {
+                let ev = alasql('SELECT * FROM evidence WHERE id = ?', [choice.evidence_id])[0];
+                if (!inventory.find(item => item.id === ev.id)) {
+                    inventory.push(ev);
+                }
+                renderInventory();
+            }
 
-const starterQuery = `-- Write your SQL below
--- Example to get you started:
--- SELECT e.name, e.role
--- FROM Employees e
--- JOIN LoginLogs l ON e.id = l.employee_id
--- WHERE '2025-06-11 21:30' BETWEEN l.login_time AND l.logout_time
---   AND e.hoodie_color = 'red';
-`;
+            // If final scene (accusation), show suspects
+            if (choice.next_scene_id === 5) {
+                renderSuspects();
+            }
 
-// Init UI text
-document.getElementById('missionPrompt').textContent = missionPrompt;
-document.getElementById('sqlInput').value = starterQuery;
-document.getElementById('hints').innerHTML = `
-  <div class="bold">Hints</div>
-  <ul>
-    <li>Use <code>JOIN</code> to combine <code>Employees</code> and <code>LoginLogs</code>.</li>
-    <li>Check if a specific time falls <em>between</em> login and logout.</li>
-    <li>Filter by <code>hoodie_color = 'red'</code>.</li>
-    <li>Return <code>name</code> and <code>role</code> of suspects.</li>
-  </ul>
-  <details style="margin-top:6px;">
-    <summary>Still stuck? Reveal a solution</summary>
-    <pre style="margin-top:6px;white-space:pre-wrap;background:#fff;border:1px solid #e5e7eb;padding:8px;border-radius:10px;font-size:12px;">SELECT e.name, e.role
-FROM Employees e
-JOIN LoginLogs l ON e.id = l.employee_id
-WHERE '2025-06-11 21:30' BETWEEN l.login_time AND l.logout_time
-  AND e.hoodie_color = 'red';</pre>
-  </details>
-`;
-document.getElementById('schema').textContent = schemaSQL;
-
-// DB bootstrap
-function initDB() {
-  
-  alasql('CREATE DATABASE sqlsleuth');
-alasql('USE sqlsleuth');
-
-  alasql(schemaSQL);
-  alasql(seedSQL);
-}
-initDB();
-
-// Helpers
-function renderTable(rows){
-  const wrap = document.getElementById('results');
-  wrap.innerHTML = '';
-  if(!rows || rows.length === 0){
-    wrap.innerHTML = '<div class="muted">No rows returned.</div>';
-    return;
-  }
-  const cols = Object.keys(rows[0]);
-  const table = document.createElement('table');
-  const thead = document.createElement('thead');
-  const trh = document.createElement('tr');
-  cols.forEach(c=>{
-    const th = document.createElement('th'); th.textContent = c; trh.appendChild(th);
-  });
-  thead.appendChild(trh);
-  const tbody = document.createElement('tbody');
-  rows.forEach(r=>{
-    const tr = document.createElement('tr');
-    cols.forEach(c=>{
-      const td = document.createElement('td'); td.textContent = String(r[c]); tr.appendChild(td);
+            renderScene(choice.next_scene_id);
+        };
+        buttonsDiv.appendChild(btn);
     });
-    tbody.appendChild(tr);
-  });
-  table.appendChild(thead); table.appendChild(tbody);
-  wrap.appendChild(table);
 }
 
-function show(id, on){ document.getElementById(id).classList.toggle('hidden', !on); }
+function renderInventory() {
+    let list = document.getElementById('inventory');
+    list.innerHTML = '';
+    inventory.forEach(item => {
+        let li = document.createElement('li');
+        li.innerText = `${item.name} - ${item.description}`;
+        list.appendChild(li);
+    });
+}
 
-// Buttons
-document.getElementById('toggleHints').addEventListener('click', ()=>{
-  const el = document.getElementById('hints');
-  const btn = document.getElementById('toggleHints');
-  const isHidden = el.classList.contains('hidden');
-  show('hints', isHidden);
-  btn.textContent = isHidden ? 'Hide Hints' : 'Show Hints';
-});
+function renderSuspects() {
+    let suspects = alasql('SELECT * FROM suspects');
+    let list = document.getElementById('suspects');
+    list.innerHTML = '';
 
-document.getElementById('toggleSchema').addEventListener('click', ()=>{
-  const el = document.getElementById('schema');
-  const btn = document.getElementById('toggleSchema');
-  const isHidden = el.classList.contains('hidden');
-  show('schema', isHidden);
-  btn.textContent = isHidden ? 'Hide Schema' : 'Show Schema';
-});
+    suspects.forEach(sus => {
+        let li = document.createElement('li');
+        let btn = document.createElement('button');
+        btn.innerText = `Accuse ${sus.name}`;
+        btn.onclick = () => {
+            if (sus.guilty) {
+                alert(`✅ You solved it! ${sus.name} is the killer.`);
+            } else {
+                alert(`❌ Wrong! ${sus.name} is innocent. The real killer escaped.`);
+            }
+        };
+        li.innerText = `${sus.name} - Alibi: ${sus.alibi} `;
+        li.appendChild(btn);
+        list.appendChild(li);
+    });
+}
 
-document.getElementById('resetBtn').addEventListener('click', ()=>{
-  initDB();
-  document.getElementById('sqlInput').value = starterQuery;
-  document.getElementById('error').textContent = '';
-  show('error', false);
-  show('success', false);
-  show('status', false);
-  document.getElementById('results').innerHTML = '';
-});
-
-document.getElementById('runBtn').addEventListener('click', ()=>{
-  const errorBox = document.getElementById('error');
-  errorBox.textContent = '';
-  show('error', false);
-
-  try{
-    const sql = document.getElementById('sqlInput').value;
-    const res = alasql(sql);
-    const rows = Array.isArray(res) ? res : [];
-    renderTable(rows);
-
-    // Validate: compare to expected (order-insensitive)
-    const expected = alasql(`
-      SELECT e.name AS name, e.role AS role
-      FROM Employees e
-      JOIN LoginLogs l ON e.id = l.employee_id
-      WHERE '2025-06-11 21:30' BETWEEN l.login_time AND l.logout_time
-        AND e.hoodie_color = 'red'
-      ORDER BY name, role
-    `);
-
-    const normUser = rows
-      .map(r => ({ name: String(r.name ?? r.NAME ?? r['e.name'] ?? ''), role: String(r.role ?? r.ROLE ?? r['e.role'] ?? '') }))
-      .filter(r => r.name && r.role)
-      .sort((a,b)=> (a.name+a.role).localeCompare(b.name+b.role));
-
-    const ok = normUser.length === expected.length &&
-               normUser.every((r,i)=> r.name===expected[i].name && r.role===expected[i].role);
-
-    if(ok && normUser.length>0){
-      show('status', true);
-      show('success', true);
-    }
-  }catch(err){
-    errorBox.textContent = String(err.message || err);
-    show('error', true);
-  }
-});
+// ---------------- START GAME ----------------
+renderScene(currentScene);
