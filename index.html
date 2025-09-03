@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Mystery Game</title>
+  <meta charset="UTF-8">
+  <title>Murder Mystery SQL</title>
   <link rel="stylesheet" href="style.css">
-  <script src="alasql.min.js"></script>
-  <script src="app.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/alasql@1.7/dist/alasql.min.js"></script>
 </head>
 <body>
   <div class="game-container">
@@ -17,11 +17,13 @@
 
     <h2>Suspects</h2>
     <ul id="suspects"></ul>
-    <h2>Run Your Own SQL Query</h2>
-<textarea id="sqlInput" rows="3" cols="50" placeholder="Type SQL here..."></textarea><br>
-<button onclick="runUserQuery()">Run Query</button>
-<div id="queryResult"></div>
 
+    <h2>Run Your Own SQL Query</h2>
+    <textarea id="sqlInput" rows="3" placeholder="Type SQL here..."></textarea><br>
+    <button onclick="runUserQuery()">Run Query</button>
+    <div id="queryResult"></div>
   </div>
+
+  <script src="app.js"></script>
 </body>
 </html>

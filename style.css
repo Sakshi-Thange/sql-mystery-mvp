@@ -1,35 +1,48 @@
 body {
-  font-family: Arial, sans-serif;
   background: #111;
-  color: white;
-  text-align: center;
-  padding: 30px;
-}
-
-h1, h2 {
-  color: crimson;
-}
-
-button {
-  margin: 10px;
-  padding: 10px 20px;
-  font-size: 16px;
-  background: crimson;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-button:hover {
-  background: darkred;
+  color: #eee;
+  font-family: "Trebuchet MS", sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
 }
 
 .game-container {
-  max-width: 700px;
-  margin: auto;
-  padding: 20px;
+  background: #1c1c1c;
   border: 2px solid crimson;
+  padding: 20px;
   border-radius: 12px;
+  width: 600px;
+  text-align: center;
+}
+
+button {
+  background: crimson;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  margin: 5px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #ff3b3b;
+}
+
+textarea {
+  width: 90%;
+  margin-top: 10px;
+}
+
+table {
+  border-collapse: collapse;
+  margin: 10px auto;
+  background: #222;
+}
+
+th, td {
+  border: 1px solid #666;
+  padding: 5px 10px;
 }
