@@ -99,3 +99,48 @@ function renderSuspects() {
 
 // ---------------- START GAME ----------------
 renderScene(currentScene);
+
+
+function runUserQuery() {
+    let query = document.getElementById('sqlInput').value;
+    let resultDiv = document.getElementById('queryResult');
+    resultDiv.innerHTML = '';
+
+    try {
+        let res = alasql(query);
+
+        if (Array.isArray(res)) {
+            // Render table
+            let table = document.createElement('table');
+            table.border = "1";
+
+            // headers
+            if (res.length > 0) {
+                let headerRow = document.createElement('tr');
+                Object.keys(res[0]).forEach(col => {
+                    let th = document.createElement('th');
+                    th.innerText = col;
+                    headerRow.appendChild(th);
+                });
+                table.appendChild(headerRow);
+            }
+
+            // rows
+            res.forEach(row => {
+                let tr = document.createElement('tr');
+                Object.values(row).forEach(val => {
+                    let td = document.createElement('td');
+                    td.innerText = val;
+                    tr.appendChild(td);
+                });
+                table.appendChild(tr);
+            });
+
+            resultDiv.appendChild(table);
+        } else {
+            resultDiv.innerText = JSON.stringify(res);
+        }
+    } catch (err) {
+        resultDiv.innerHTML = `<span style="color:red;">Error: ${err.message}</span>`;
+    }
+}
